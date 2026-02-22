@@ -24,29 +24,54 @@ export default function MateriPage() {
     const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
 
     // Hardcoded dictionary to map "Contoh Bacaan" strings to Surah:Ayat on EQuran.id
-    // Keys match the strings from the Google Sheet
+    // Keys match the strings from the user's spreadsheet list
     const audioMap: Record<string, { surah: number, ayat: number }> = {
-        "مِنْ بَعْدِ": { surah: 2, ayat: 27 }, // Al Baqarah: 27
-        "يَوْمَىِٕذٍ بِيَجَهَنَّمَ": { surah: 89, ayat: 23 }, // Al-Fajr: 23
-        "عَلِيْمٌ بِذَاتِ الصُّدُوْرِ": { surah: 3, ayat: 119 }, // Ali Imran: 119
-        "مِنْ مَسَدٍ": { surah: 111, ayat: 5 }, // Al-Lahab: 5
-        "مِنْ مَاءٍ مَهِيْنٍ": { surah: 32, ayat: 8 }, // As-Sajdah: 8
-        "مِنْ نُوْرٍ": { surah: 24, ayat: 40 }, // An-Nur: 40
-        "يَوْمَىِٕذٍ يَّصْدُرُ النَّاسُ": { surah: 99, ayat: 6 }, // Az-Zalzalah: 6
-        "فَمَنْ يَّعْمَلْ": { surah: 99, ayat: 7 }, // Az-Zalzalah: 7
-        "مِنْ وَرَآئِهِمْ": { surah: 85, ayat: 20 }, // Al-Buruj: 20
-        "مِنْ رَبِّهِمْ": { surah: 2, ayat: 5 }, // Al-Baqarah: 5
-        "مِّنْ لَّدُنْكَ": { surah: 4, ayat: 75 }, // An-Nisa: 75
-        "مِنْ خَوْفٍ": { surah: 106, ayat: 4 }, // Quraisy: 4
-        "مِنْ طِيْنٍ": { surah: 51, ayat: 33 }, // Adz-Dzariyat: 33
-        "مِنْ غِلٍّ": { surah: 15, ayat: 47 }, // Al-Hijr: 47
-        "سَمِيْعٌ عَلِيْمٌ": { surah: 2, ayat: 181 }, // Al-Baqarah: 181
-        "وَ هُمْ بِالْاٰخِرَةِ": { surah: 12, ayat: 37 }, // Yusuf: 37
-        "يَعْتَصِمْ بِاللّٰهِ": { surah: 3, ayat: 101 }, // Ali Imran: 101
-        "عَلَيْهِمْ مَدَدًا": { surah: 18, ayat: 11 }, // Al-Kahf: 11 (approx)
-        "وَلَهُمْ عَذَابٌ": { surah: 2, ayat: 10 }, // Al-Baqarah: 10
-        "اَلَمْ تَرَ": { surah: 105, ayat: 1 }, // Al-Fil: 1
-        "فِيْهِمْ حَتّٰى": { surah: 9, ayat: 117 } // At-Tawbah: 117 (approx/example)
+        "مِنْ خَوْفٍ": { surah: 106, ayat: 4 },
+        "مِنْ مَسَدٍ ⭢ مِمَّسَدٍ": { surah: 111, ayat: 5 },
+        "مِنْ لَدُنْكَ ⭢ مِلَّدُنْكَ": { surah: 4, ayat: 75 },
+        "مِنۢ بَعْدِ": { surah: 2, ayat: 27 },
+        "مِن شَرِّ": { surah: 113, ayat: 2 },
+        "تَرْمِيهِم بِحِجَارَةٍ": { surah: 105, ayat: 4 },
+        "لَهُم مَّثَلًا": { surah: 18, ayat: 32 },
+        "هُمْ نَائِمُونَ": { surah: 68, ayat: 19 },
+        "إِنَّ , ثُمَّ": { surah: 102, ayat: 8 },
+        "قَد دَّخَلُواْ": { surah: 5, ayat: 61 },
+        "لَئِنۢ بَسَطتَ": { surah: 5, ayat: 28 },
+        "أَلَمْ نَخْلُقكُّمْ": { surah: 77, ayat: 20 },
+        "يَقْطَعُونَ": { surah: 2, ayat: 27 },
+        "مِنْ خَلَقْ (خَلَقِ)": { surah: 96, ayat: 2 },
+        "ٱلْحَمْدُ": { surah: 1, ayat: 2 },
+        "ٱلشَّمْسُ": { surah: 91, ayat: 1 },
+        "شَهِدَ ٱللَّهُ": { surah: 3, ayat: 18 },
+        "بِسْمِ ٱللَّهِ": { surah: 1, ayat: 1 },
+        "رَضُواْ , وَٱرْحَمْنَا": { surah: 2, ayat: 286 },
+        "فَرِيقٌ , فِرْعَوْنَ": { surah: 2, ayat: 50 },
+        "فِرْقٍ": { surah: 26, ayat: 63 },
+        "قُلْ هُوَ": { surah: 112, ayat: 1 },
+        "قُل رَّبِّ": { surah: 23, ayat: 94 },
+        "إِنَّهُۥ لَا يُحِبُّ": { surah: 6, ayat: 141 },
+        "نُوحِيهَا": { surah: 11, ayat: 49 },
+        "سَوَآءٌ": { surah: 2, ayat: 6 },
+        "بِمَآ أُنزِلَ": { surah: 2, ayat: 4 },
+        "وَلَا ٱلضَّآلِّينَ": { surah: 1, ayat: 7 },
+        "ءَآلْـَٰٔنَ": { surah: 10, ayat: 51 },
+        "قُرَيْشٍ , خَوْفٍ": { surah: 106, ayat: 1 },
+        "يَعْمَلُونَ (نْ)": { surah: 2, ayat: 3 },
+        "بِهِۦ كَثِيرًا": { surah: 2, ayat: 26 },
+        "عِندَهُۥٓ إِلَّا": { surah: 2, ayat: 255 },
+        "عَلِيمًا حَكِيمًا (حَكِيمَا)": { surah: 4, ayat: 11 },
+        "ءَامَنُواْ , أُوتُواْ": { surah: 2, ayat: 25 },
+        "يٰسٓ (Yaa - 2 harakat)": { surah: 36, ayat: 1 },
+        "الٓمٓ (Laaam Miim)": { surah: 2, ayat: 1 },
+        "قٓ وَٱلْقُرْءَانِ": { surah: 50, ayat: 1 },
+        "ٱلنَّبِيِّۦنَ": { surah: 2, ayat: 61 },
+        "ءَآللَّهُ أَذِنَ لَكُمْ": { surah: 10, ayat: 59 },
+        "مِثْلًا ۘ أَصْحَابَ": { surah: 36, ayat: 13 },
+        "مَالِكِ يَوْمِ الدِّينِ ۗ": { surah: 1, ayat: 4 },
+        "فَزَادَهُمُ اللَّهُ مَرَضًا ۚ": { surah: 2, ayat: 10 },
+        "قَالُوا إِنَّا مَعَكُمْ ۙ": { surah: 2, ayat: 14 },
+        "عِوَجًا ۜ ﴿١﴾ قَيِّمًا": { surah: 18, ayat: 1 },
+        "أَنْعَمْتَ (Tenggorokan)": { surah: 1, ayat: 7 }
     };
 
     useEffect(() => {
@@ -264,10 +289,10 @@ export default function MateriPage() {
                                                 onClick={() => handlePlayAudio(item)}
                                                 disabled={isAudioLoading === item.id}
                                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm transition-all text-xs font-bold uppercase tracking-wider ${isAudioLoading === item.id
-                                                        ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-wait dark:bg-white/5 dark:border-white/10 dark:text-gray-400'
-                                                        : playingId === item.id
-                                                            ? 'bg-sky-100 border-sky-200 text-sky-700 dark:bg-qareeb-accent/20 dark:border-qareeb-accent/20 dark:text-qareeb-accent animate-pulse'
-                                                            : 'bg-white border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-qareeb-accent dark:hover:text-qareeb-black hover:border-indigo-600 dark:hover:border-qareeb-accent'
+                                                    ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-wait dark:bg-white/5 dark:border-white/10 dark:text-gray-400'
+                                                    : playingId === item.id
+                                                        ? 'bg-sky-100 border-sky-200 text-sky-700 dark:bg-qareeb-accent/20 dark:border-qareeb-accent/20 dark:text-qareeb-accent animate-pulse'
+                                                        : 'bg-white border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-qareeb-accent dark:hover:text-qareeb-black hover:border-indigo-600 dark:hover:border-qareeb-accent'
                                                     }`}
                                             >
                                                 {isAudioLoading === item.id ? (

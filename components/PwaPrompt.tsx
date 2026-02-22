@@ -44,9 +44,9 @@ export default function PwaPrompt() {
                 <X size={18} />
             </button>
 
-            <div className="flex items-start gap-3 mt-1">
-                <div className="w-12 h-12 bg-indigo-50 dark:bg-qareeb-gray rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-indigo-700 dark:text-qareeb-accent text-xl">
-                    T
+            <div className="flex items-start gap-4 mt-1">
+                <div className="flex-shrink-0">
+                    <img src="/icons/icon-192x192.png" alt="Logo" className="w-14 h-14 rounded-2xl shadow-indigo-200 dark:shadow-none shadow-lg border border-indigo-50 dark:border-white/10" />
                 </div>
                 <div>
                     <h3 className="text-sm font-bold text-gray-900 dark:text-white">Install Tajwid App</h3>
