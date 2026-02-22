@@ -16,6 +16,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Tajwid App - Modern Spiritual App",
   description: "Belajar ilmu tajwid dengan mudah dan interaktif",
+  manifest: '/manifest.json',
+  themeColor: '#312e81',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Tajwid App',
+  },
+  icons: {
+    apple: '/apple-icon.png',
+  }
 };
 
 export default function RootLayout({

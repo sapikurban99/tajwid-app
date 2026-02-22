@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import PwaPrompt from '@/components/PwaPrompt';
 
 export default function TajwidDashboard() {
   const [errorStatus, setErrorStatus] = useState(false);
@@ -159,6 +160,9 @@ export default function TajwidDashboard() {
         <BottomNavItem href="/materi" icon={<BookOpen size={24} />} label="Modul" />
         <BottomNavItem href="/quiz" icon={<CheckSquare size={24} />} label="Latihan" />
       </div>
+
+      {/* PWA Install Prompt */}
+      <PwaPrompt />
     </div>
   );
 }

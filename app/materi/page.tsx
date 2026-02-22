@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Loader2, Volume2, BookOpen, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Loader2, Volume2, PauseCircle, BookOpen, ChevronRight, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 interface MateriTajwid {
@@ -17,6 +17,37 @@ export default function MateriPage() {
     const [materis, setMateris] = useState<MateriTajwid[]>([]);
     const [loadingProgress, setLoadingProgress] = useState(-1);
     const [selectedKategori, setSelectedKategori] = useState<string | null>(null);
+
+    // Audio Playback states for Tajwid Materis
+    const [playingId, setPlayingId] = useState<string | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
+
+    // Hardcoded dictionary to map "Contoh Bacaan" strings to Surah:Ayat on EQuran.id
+    // Keys match the strings from the Google Sheet
+    const audioMap: Record<string, { surah: number, ayat: number }> = {
+        "مِنْ بَعْدِ": { surah: 2, ayat: 27 }, // Al Baqarah: 27
+        "يَوْمَىِٕذٍ بِيَجَهَنَّمَ": { surah: 89, ayat: 23 }, // Al-Fajr: 23
+        "عَلِيْمٌ بِذَاتِ الصُّدُوْرِ": { surah: 3, ayat: 119 }, // Ali Imran: 119
+        "مِنْ مَسَدٍ": { surah: 111, ayat: 5 }, // Al-Lahab: 5
+        "مِنْ مَاءٍ مَهِيْنٍ": { surah: 32, ayat: 8 }, // As-Sajdah: 8
+        "مِنْ نُوْرٍ": { surah: 24, ayat: 40 }, // An-Nur: 40
+        "يَوْمَىِٕذٍ يَّصْدُرُ النَّاسُ": { surah: 99, ayat: 6 }, // Az-Zalzalah: 6
+        "فَمَنْ يَّعْمَلْ": { surah: 99, ayat: 7 }, // Az-Zalzalah: 7
+        "مِنْ وَرَآئِهِمْ": { surah: 85, ayat: 20 }, // Al-Buruj: 20
+        "مِنْ رَبِّهِمْ": { surah: 2, ayat: 5 }, // Al-Baqarah: 5
+        "مِّنْ لَّدُنْكَ": { surah: 4, ayat: 75 }, // An-Nisa: 75
+        "مِنْ خَوْفٍ": { surah: 106, ayat: 4 }, // Quraisy: 4
+        "مِنْ طِيْنٍ": { surah: 51, ayat: 33 }, // Adz-Dzariyat: 33
+        "مِنْ غِلٍّ": { surah: 15, ayat: 47 }, // Al-Hijr: 47
+        "سَمِيْعٌ عَلِيْمٌ": { surah: 2, ayat: 181 }, // Al-Baqarah: 181
+        "وَ هُمْ بِالْاٰخِرَةِ": { surah: 12, ayat: 37 }, // Yusuf: 37
+        "يَعْتَصِمْ بِاللّٰهِ": { surah: 3, ayat: 101 }, // Ali Imran: 101
+        "عَلَيْهِمْ مَدَدًا": { surah: 18, ayat: 11 }, // Al-Kahf: 11 (approx)
+        "وَلَهُمْ عَذَابٌ": { surah: 2, ayat: 10 }, // Al-Baqarah: 10
+        "اَلَمْ تَرَ": { surah: 105, ayat: 1 }, // Al-Fil: 1
+        "فِيْهِمْ حَتّٰى": { surah: 9, ayat: 117 } // At-Tawbah: 117 (approx/example)
+    };
 
     useEffect(() => {
         let pct = 0;
@@ -71,6 +102,58 @@ export default function MateriPage() {
             const currentStreak = parseInt(localStorage.getItem('tajwid_streak') || '0');
             localStorage.setItem('tajwid_streak', (currentStreak + 1).toString());
             localStorage.setItem('tajwid_last_study_date', today);
+        }
+    };
+
+    const handlePlayAudio = async (item: MateriTajwid) => {
+        const contoh = item.contoh.trim();
+        const mapping = audioMap[contoh];
+
+        if (!mapping) {
+            alert(`Mohon maaf, contoh bacaan tajwid "${contoh}" belum dipetakan ke sistem audio Al-Quran.`);
+            return;
+        }
+
+        // Stop current playing
+        if (playingId === item.id) {
+            if (audioRef.current) audioRef.current.pause();
+            setPlayingId(null);
+            return;
+        }
+
+        if (audioRef.current) {
+            audioRef.current.pause();
+        }
+
+        setIsAudioLoading(item.id);
+
+        try {
+            // Fetch the Specific Surah detail
+            const res = await fetch(`https://equran.id/api/v2/surat/${mapping.surah}`);
+            if (!res.ok) throw new Error("Gagal mengambil data EQuran API.");
+
+            const data = await res.json();
+            const ayatList = data.data.ayat;
+
+            // Find the specific Ayat
+            const targetAyat = ayatList.find((a: any) => a.nomorAyat === mapping.ayat);
+            if (!targetAyat || !targetAyat.audio['05']) throw new Error("Audio ayat tidak ditemukan.");
+
+            const audioUrl = targetAyat.audio['05'];
+
+            audioRef.current = new Audio(audioUrl);
+            audioRef.current.play();
+            setPlayingId(item.id);
+
+            audioRef.current.onended = () => {
+                setPlayingId(null);
+            };
+
+        } catch (error) {
+            console.error("Error playing audio:", error);
+            alert("Terjadi kesalahan saat mencoba memutar contoh tajwid. Coba lagi nanti.");
+        } finally {
+            setIsAudioLoading(null);
         }
     };
 
@@ -177,10 +260,25 @@ export default function MateriPage() {
                                             <p className="text-2xl font-arabic font-bold text-indigo-900 dark:text-white text-right leading-relaxed" dir="rtl">{item.huruf}</p>
                                         </div>
                                         <div className="border-t border-indigo-100/60 dark:border-white/10 pt-3 flex justify-between items-end">
-                                            <div className="flex items-center gap-2 bg-white dark:bg-white/5 px-3 py-1.5 rounded-full border border-indigo-100 dark:border-white/10 shadow-sm cursor-pointer hover:bg-indigo-600 dark:hover:bg-qareeb-accent hover:text-white dark:hover:text-qareeb-black hover:border-indigo-600 dark:hover:border-qareeb-accent transition-all text-indigo-600 dark:text-white">
-                                                <Volume2 size={16} />
-                                                <span className="text-[10px] font-bold uppercase tracking-wider">Bunyi</span>
-                                            </div>
+                                            <button
+                                                onClick={() => handlePlayAudio(item)}
+                                                disabled={isAudioLoading === item.id}
+                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm transition-all text-xs font-bold uppercase tracking-wider ${isAudioLoading === item.id
+                                                        ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-wait dark:bg-white/5 dark:border-white/10 dark:text-gray-400'
+                                                        : playingId === item.id
+                                                            ? 'bg-sky-100 border-sky-200 text-sky-700 dark:bg-qareeb-accent/20 dark:border-qareeb-accent/20 dark:text-qareeb-accent animate-pulse'
+                                                            : 'bg-white border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-qareeb-accent dark:hover:text-qareeb-black hover:border-indigo-600 dark:hover:border-qareeb-accent'
+                                                    }`}
+                                            >
+                                                {isAudioLoading === item.id ? (
+                                                    <Loader2 size={16} className="animate-spin" />
+                                                ) : playingId === item.id ? (
+                                                    <PauseCircle size={16} />
+                                                ) : (
+                                                    <Volume2 size={16} />
+                                                )}
+                                                <span>{isAudioLoading === item.id ? 'Memuat...' : playingId === item.id ? 'Memutar' : 'Bunyi'}</span>
+                                            </button>
                                             <div className="text-right">
                                                 <p className="text-[10px] text-indigo-600 dark:text-qareeb-muted font-bold uppercase tracking-wider mb-2">Contoh Bacaan</p>
                                                 <p className="text-3xl font-arabic font-bold text-[#312e81] dark:text-qareeb-accent leading-tight" dir="rtl">{item.contoh}</p>
