@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { ArrowLeft, Loader2, PlayCircle, BookOpen, AlignJustify, BookMarked, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect, use, useRef } from 'react';
+import { ArrowLeft, Loader2, PlayCircle, PauseCircle, BookOpen, AlignJustify, BookMarked, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 interface Ayat {
@@ -9,6 +9,7 @@ interface Ayat {
     teksArab: string;
     teksLatin: string;
     teksIndonesia: string;
+    audio: Record<string, string>;
 }
 
 interface SurahDetail {
@@ -28,6 +29,10 @@ export default function SurahPage({ params }: { params: Promise<{ nomor: string 
     const [loadingProgress, setLoadingProgress] = useState(-1);
     const [isMushafMode, setIsMushafMode] = useState(false);
     const [bookmarkedStr, setBookmarkedStr] = useState<string | null>(null);
+
+    // Audio State
+    const [playingAyat, setPlayingAyat] = useState<number | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
         // Load initial bookmark state
@@ -64,8 +69,43 @@ export default function SurahPage({ params }: { params: Promise<{ nomor: string 
             fetchSurahDetail();
         }
 
-        return () => clearInterval(interval);
+        return () => {
+            clearInterval(interval);
+            // Cleanup audio if unmounting
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+        };
     }, [nomor]);
+
+    const handlePlayAudio = (ayatNomor: number, audioUrls: Record<string, string>) => {
+        // Preferred reciter: 05 (Misyari Rasyid)
+        const audioUrl = audioUrls['05'] || Object.values(audioUrls)[0];
+
+        if (!audioUrl) return;
+
+        if (playingAyat === ayatNomor) {
+            // Already playing this ayat, so pause it
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+            setPlayingAyat(null);
+        } else {
+            // Stop whatever is playing
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+
+            // Start new audio
+            audioRef.current = new Audio(audioUrl);
+            audioRef.current.play();
+            setPlayingAyat(ayatNomor);
+
+            audioRef.current.onended = () => {
+                setPlayingAyat(null);
+            };
+        }
+    };
 
     const handleBookmark = (ayatNomor: number) => {
         if (!surah) return;
@@ -182,8 +222,11 @@ export default function SurahPage({ params }: { params: Promise<{ nomor: string 
                                                 {isBookmarked ? <CheckCircle2 size={16} /> : <BookMarked size={16} />}
                                                 {isBookmarked ? 'Ditandai' : 'Tandai'}
                                             </button>
-                                            <button className="hover:text-indigo-700 dark:hover:text-white transition-colors">
-                                                <PlayCircle size={24} />
+                                            <button
+                                                onClick={() => handlePlayAudio(a.nomorAyat, a.audio)}
+                                                className={`transition-colors ${playingAyat === a.nomorAyat ? 'text-sky-500 animate-pulse' : 'hover:text-indigo-700 dark:hover:text-white'}`}
+                                            >
+                                                {playingAyat === a.nomorAyat ? <PauseCircle size={24} /> : <PlayCircle size={24} />}
                                             </button>
                                         </div>
                                     </div>
