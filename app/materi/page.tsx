@@ -5,12 +5,12 @@ import { ArrowLeft, Loader2, Volume2, PauseCircle, BookOpen, ChevronRight, Check
 import Link from 'next/link';
 
 interface MateriTajwid {
-    id: string;
-    kategori: string;
-    judul: string;
-    deskripsi: string;
-    huruf: string;
-    contoh: string;
+    ID: string;
+    Kategori: string;
+    Judul: string;
+    Deskripsi: string;
+    Huruf: string;
+    Contoh: string;
 }
 
 export default function MateriPage() {
@@ -90,7 +90,13 @@ export default function MateriPage() {
 
         const fetchMateri = async () => {
             try {
-                const res = await fetch(process.env.NEXT_PUBLIC_GAS_URL || '');
+                const gasUrl = process.env.NEXT_PUBLIC_GAS_URL || '';
+                // Append ?sheet=MateriTajwid to target the Tajwid sheet explicitly
+                const url = gasUrl.includes('?')
+                    ? `${gasUrl}&sheet=MateriTajwid`
+                    : `${gasUrl}?sheet=MateriTajwid`;
+
+                const res = await fetch(url);
                 const { data } = await res.json();
                 await new Promise(r => setTimeout(r, 600));
 
@@ -110,8 +116,8 @@ export default function MateriPage() {
     }, []);
 
     const groupedMateri = materis.reduce((acc, curr) => {
-        if (!acc[curr.kategori]) acc[curr.kategori] = [];
-        acc[curr.kategori].push(curr);
+        if (!acc[curr.Kategori]) acc[curr.Kategori] = [];
+        acc[curr.Kategori].push(curr);
         return acc;
     }, {} as Record<string, MateriTajwid[]>);
 
@@ -131,7 +137,7 @@ export default function MateriPage() {
     };
 
     const handlePlayAudio = async (item: MateriTajwid) => {
-        const contoh = item.contoh.trim();
+        const contoh = item.Contoh.trim();
         const mapping = audioMap[contoh];
 
         if (!mapping) {
@@ -140,7 +146,7 @@ export default function MateriPage() {
         }
 
         // Stop current playing
-        if (playingId === item.id) {
+        if (playingId === item.ID) {
             if (audioRef.current) audioRef.current.pause();
             setPlayingId(null);
             return;
@@ -150,7 +156,7 @@ export default function MateriPage() {
             audioRef.current.pause();
         }
 
-        setIsAudioLoading(item.id);
+        setIsAudioLoading(item.ID);
 
         try {
             // Fetch the Specific Surah detail
@@ -168,7 +174,7 @@ export default function MateriPage() {
 
             audioRef.current = new Audio(audioUrl);
             audioRef.current.play();
-            setPlayingId(item.id);
+            setPlayingId(item.ID);
 
             audioRef.current.onended = () => {
                 setPlayingId(null);
@@ -263,50 +269,50 @@ export default function MateriPage() {
                         </div>
 
                         <div className="space-y-4">
-                            {groupedMateri[selectedKategori]?.map((item) => (
-                                <div key={item.id} className="bg-white dark:bg-qareeb-card p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-white/5 hover:shadow-md transition-shadow relative overflow-hidden group">
+                            {groupedMateri[selectedKategori]?.map((item, index) => (
+                                <div key={item.ID || `materi-${index}`} className="bg-white dark:bg-qareeb-card p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-white/5 hover:shadow-md transition-shadow relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-50 dark:from-white/5 to-transparent rounded-bl-full opacity-50 pointer-events-none"></div>
 
                                     <div className="flex justify-between items-start mb-2 relative z-10">
-                                        <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-indigo-800 dark:group-hover:text-qareeb-accent transition-colors">{item.judul}</h3>
+                                        <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-indigo-800 dark:group-hover:text-qareeb-accent transition-colors">{item.Judul}</h3>
                                         <div className="bg-sky-100 dark:bg-qareeb-accent/10 text-sky-800 dark:text-qareeb-accent text-xs px-2 py-1 rounded-md font-semibold flex items-center gap-1 border dark:border-qareeb-accent/20">
                                             <CheckCircle2 size={12} />
-                                            {item.id}
+                                            {item.ID}
                                         </div>
                                     </div>
 
                                     <p className="text-sm text-gray-600 dark:text-qareeb-muted mb-4 leading-relaxed relative z-10">
-                                        {item.deskripsi}
+                                        {item.Deskripsi}
                                     </p>
 
                                     <div className="bg-indigo-50 dark:bg-qareeb-gray rounded-xl p-4 space-y-4 relative z-10 border border-indigo-100/50 dark:border-white/5">
                                         <div>
                                             <p className="text-[10px] text-indigo-600 dark:text-qareeb-muted font-bold uppercase tracking-wider mb-2">Huruf Hijaiyah</p>
-                                            <p className="text-2xl font-arabic font-bold text-indigo-900 dark:text-white text-right leading-relaxed" dir="rtl">{item.huruf}</p>
+                                            <p className="text-2xl font-arabic font-bold text-indigo-900 dark:text-white text-right leading-relaxed" dir="rtl">{item.Huruf}</p>
                                         </div>
                                         <div className="border-t border-indigo-100/60 dark:border-white/10 pt-3 flex justify-between items-end">
                                             <button
                                                 onClick={() => handlePlayAudio(item)}
-                                                disabled={isAudioLoading === item.id}
-                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm transition-all text-xs font-bold uppercase tracking-wider ${isAudioLoading === item.id
+                                                disabled={isAudioLoading === item.ID}
+                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm transition-all text-xs font-bold uppercase tracking-wider ${isAudioLoading === item.ID
                                                     ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-wait dark:bg-white/5 dark:border-white/10 dark:text-gray-400'
-                                                    : playingId === item.id
+                                                    : playingId === item.ID
                                                         ? 'bg-sky-100 border-sky-200 text-sky-700 dark:bg-qareeb-accent/20 dark:border-qareeb-accent/20 dark:text-qareeb-accent animate-pulse'
                                                         : 'bg-white border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-qareeb-accent dark:hover:text-qareeb-black hover:border-indigo-600 dark:hover:border-qareeb-accent'
                                                     }`}
                                             >
-                                                {isAudioLoading === item.id ? (
+                                                {isAudioLoading === item.ID ? (
                                                     <Loader2 size={16} className="animate-spin" />
-                                                ) : playingId === item.id ? (
+                                                ) : playingId === item.ID ? (
                                                     <PauseCircle size={16} />
                                                 ) : (
                                                     <Volume2 size={16} />
                                                 )}
-                                                <span>{isAudioLoading === item.id ? 'Memuat...' : playingId === item.id ? 'Memutar' : 'Bunyi'}</span>
+                                                <span>{isAudioLoading === item.ID ? 'Memuat...' : playingId === item.ID ? 'Memutar' : 'Bunyi'}</span>
                                             </button>
                                             <div className="text-right">
                                                 <p className="text-[10px] text-indigo-600 dark:text-qareeb-muted font-bold uppercase tracking-wider mb-2">Contoh Bacaan</p>
-                                                <p className="text-3xl font-arabic font-bold text-[#312e81] dark:text-qareeb-accent leading-tight" dir="rtl">{item.contoh}</p>
+                                                <p className="text-3xl font-arabic font-bold text-[#312e81] dark:text-qareeb-accent leading-tight" dir="rtl">{item.Contoh}</p>
                                             </div>
                                         </div>
                                     </div>

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import {
   BookOpen,
   FileText, Home, CheckSquare,
-  PlayCircle, BookMarked, Activity, Moon, Sun
+  PlayCircle, BookMarked, Activity, Moon, Sun,
+  ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
@@ -44,7 +45,11 @@ export default function TajwidDashboard() {
       }
 
       try {
-        const res = await fetch(gasUrl);
+        const url = gasUrl.includes('?')
+          ? `${gasUrl}&sheet=MateriTajwid`
+          : `${gasUrl}?sheet=MateriTajwid`;
+
+        const res = await fetch(url);
 
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -90,7 +95,7 @@ export default function TajwidDashboard() {
         )}
       </div>
 
-      <div className="px-6 space-y-6 bg-white dark:bg-qareeb-black pb-6 transition-colors duration-300">
+      <main className="px-5 py-6 space-y-8 pb-32">
         {/* Peringatan jika Offline */}
         {errorStatus && (
           <div className="bg-amber-50 text-amber-700 p-3 rounded-xl text-xs font-medium border border-amber-200">
@@ -98,68 +103,121 @@ export default function TajwidDashboard() {
           </div>
         )}
 
-        {/* Hero Card */}
-        <div className="bg-[#312e81] dark:bg-qareeb-card dark:card-gradient rounded-3xl p-6 text-white shadow-lg relative overflow-hidden transition-all duration-300">
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-400 dark:bg-qareeb-accent rounded-full mix-blend-multiply dark:mix-blend-normal filter blur-2xl opacity-50 dark:opacity-20"></div>
-
-          <div className="flex justify-between items-start mb-6 relative z-10">
-            <div className="bg-white/20 dark:bg-white/5 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-medium dark:border dark:border-white/10">
-              <BookMarked size={14} className="dark:text-qareeb-accent" />
-              <span className="dark:text-white/90">Modul Terakhir</span>
+        {/* BEGIN: HeroCard (Active Learning) */}
+        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-950 p-6 text-white shadow-xl shadow-indigo-500/20">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="relative z-10 flex flex-col gap-5">
+            <div>
+              <span className="px-3 py-1 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider">Terakhir Belajar</span>
+              <h2 className="text-2xl font-bold mt-3 leading-tight">{lastModule}</h2>
+              <p className="text-indigo-100/80 text-sm mt-1">Lanjutkan progres belajarmu hari ini.</p>
             </div>
-            <Link href="/materi">
-              <div className="w-10 h-10 rounded-2xl bg-sky-400 dark:bg-qareeb-accent flex items-center justify-center shadow-inner cursor-pointer hover:bg-sky-500 dark:hover:bg-cyan-400 transition dark:accent-glow">
-                <PlayCircle size={24} className="text-indigo-900 dark:text-black" />
+            <div className="space-y-2">
+              <div className="flex justify-between items-end">
+                <span className="text-xs font-medium text-indigo-200">Status</span>
+                <span className="text-xs font-bold text-white">{lastModule === "Belum Mulai Belajar" ? "0%" : "Sedang dipelajari"}</span>
+              </div>
+              <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
+                <div className={`h-full bg-sky-400 rounded-full ${lastModule === "Belum Mulai Belajar" ? "w-0" : "w-1/2"}`}></div>
+              </div>
+            </div>
+            <Link href="/materi" className="w-full bg-white text-indigo-900 font-bold py-4 rounded-2xl shadow-lg shadow-black/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+              <span>Lanjutkan Belajar</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" strokeLinecap="round" strokeLinejoin="round"></path>
+              </svg>
+            </Link>
+          </div>
+        </section>
+        {/* END: HeroCard */}
+
+        {/* PRIMARY PILLARS: Quran, Tajwid, Safinah */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold dark:text-white">Pilar Utama</h3>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {/* Al-Qur'an Card */}
+            <Link href="/quran" className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 rounded-3xl shadow-sm flex items-center gap-4 group active:scale-[0.98] transition-transform">
+              <div className="flex-shrink-0 w-16 h-16 bg-sky-50 dark:bg-sky-500/10 rounded-2xl flex items-center justify-center text-sky-600 dark:text-sky-400 group-hover:bg-sky-500 group-hover:text-white transition-colors">
+                <BookOpen size={32} />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-slate-900 dark:text-white text-lg">Al-Qur'an</h4>
+                <p className="text-xs text-slate-500 font-medium mt-1">Baca Al-Qur'an dengan terjemahan dan audio.</p>
+              </div>
+              <div className="p-2 text-sky-600 dark:text-sky-400">
+                <ChevronRight size={24} />
+              </div>
+            </Link>
+
+            {/* Ilmu Tajwid Card */}
+            <Link href="/materi" className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 rounded-3xl shadow-sm flex items-center gap-4 group active:scale-[0.98] transition-transform">
+              <div className="flex-shrink-0 w-16 h-16 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                <FileText size={32} />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-slate-900 dark:text-white text-lg">Ilmu Tajwid</h4>
+                <p className="text-xs text-slate-500 font-medium mt-1">Pelajari dasar-dasar tajwid dan makharijul huruf.</p>
+              </div>
+              <div className="p-2 text-indigo-600 dark:text-indigo-400">
+                <ChevronRight size={24} />
+              </div>
+            </Link>
+
+            {/* Fiqih Safinah Card */}
+            <Link href="/safinatun" className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 rounded-3xl shadow-sm flex items-center gap-4 group active:scale-[0.98] transition-transform">
+              <div className="flex-shrink-0 w-16 h-16 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                <BookMarked size={32} />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-slate-900 dark:text-white text-lg">Safinatun Najah</h4>
+                <p className="text-xs text-slate-500 font-medium mt-1">Kitab fiqih dasar tentang ibadah dan thaharah.</p>
+              </div>
+              <div className="p-2 text-emerald-600 dark:text-emerald-400">
+                <ChevronRight size={24} />
               </div>
             </Link>
           </div>
+        </section>
 
-          <p className="text-indigo-100 dark:text-qareeb-muted text-xs font-semibold tracking-wider uppercase mb-1 relative z-10">LANJUTKAN BELAJAR</p>
-          <h2 className="text-2xl font-bold mb-6 line-clamp-2 relative z-10">{lastModule}</h2>
-
-          <div className="relative z-10">
-            <div className="flex justify-between text-xs text-indigo-100 dark:text-qareeb-muted mb-2">
-              <span>Status</span>
-              <span>{lastModule === "Belum Mulai Belajar" ? "0%" : "Sedang dipelajari"}</span>
+        {/* Stats Grid */}
+        <section className="grid grid-cols-2 gap-4">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-orange-100 dark:bg-orange-500/10 flex items-center justify-center text-orange-600 dark:text-orange-400">
+              <Activity size={24} />
             </div>
-            <div className="w-full h-2 bg-indigo-800 dark:bg-white/10 rounded-full overflow-hidden">
-              <div className={`h-full bg-sky-400 dark:bg-qareeb-accent rounded-full ${lastModule === "Belum Mulai Belajar" ? "w-0" : "w-1/2"} dark:accent-glow`}></div>
+            <div>
+              <p className="text-2xl font-bold dark:text-white leading-tight">{streak} Hari</p>
+              <p className="text-xs text-slate-500 font-medium">Streak Belajar</p>
             </div>
           </div>
+
+          <Link href="/quiz">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 h-full active:scale-95 transition-transform group hover:border-orange-300 dark:hover:border-orange-500/50">
+              <div className="w-10 h-10 rounded-2xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 group-hover:bg-orange-100">
+                <CheckSquare size={24} />
+              </div>
+              <div>
+                <p className="text-xl font-bold dark:text-white leading-tight">Latihan</p>
+                <p className="text-xs text-slate-500 font-medium">Uji pemahamanmu mengenai Ilmu Tajwid</p>
+              </div>
+            </div>
+          </Link>
+        </section>
+      </main>
+
+      {/* BEGIN: BottomNavigation */}
+      <nav className="fixed bottom-0 inset-x-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-50 pb-safe max-w-md mx-auto rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)] dark:shadow-none">
+        <div className="flex items-center justify-around h-20 px-4">
+          <BottomNavItem href="/" icon={<Home size={24} />} label="Home" active />
+          <BottomNavItem href="/quran" icon={<BookOpen size={24} />} label="Qur'an" />
+          <BottomNavItem href="/materi" icon={<FileText size={24} />} label="Tajwid" />
+          <BottomNavItem href="/safinatun" icon={<BookMarked size={24} />} label="Safinah" />
         </div>
-
-        {/* Mini Stats Card */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="border border-gray-100 dark:border-white/5 bg-white dark:bg-qareeb-card rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm transition-colors duration-300">
-            <Activity size={24} className="text-orange-400 dark:text-cyan-400 mb-2" />
-            <p className="text-xs text-gray-500 dark:text-qareeb-muted font-medium uppercase">Streak Belajar</p>
-            <p className="text-lg font-bold text-gray-800 dark:text-white">{streak} Hari</p>
-          </div>
-          <div className="border border-gray-100 dark:border-white/5 bg-white dark:bg-qareeb-card rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm transition-colors duration-300">
-            <BookOpen size={24} className="text-yellow-400 dark:text-qareeb-accent mb-2" />
-            <p className="text-xs text-gray-500 dark:text-qareeb-muted font-medium uppercase">Modul Selesai</p>
-            <p className="text-lg font-bold text-gray-800 dark:text-white">{modulSelesai}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Access Grid */}
-      <div className="px-6 py-6 mt-2 bg-gray-50 dark:bg-qareeb-black transition-colors duration-300">
-        <h3 className="text-xs font-bold text-gray-400 dark:text-qareeb-muted tracking-wider mb-6">AKSES CEPAT</h3>
-
-        <div className="grid grid-cols-3 gap-y-8 gap-x-4">
-          <QuickAction href="/quran" icon={<BookOpen size={24} className="text-blue-600 dark:text-white group-hover:dark:text-qareeb-accent transition-colors" />} label="Al-Qur'an" bg="bg-blue-50 dark:bg-qareeb-gray dark:border dark:border-white/5" />
-          <QuickAction href="/materi" icon={<FileText size={24} className="text-indigo-600 dark:text-white group-hover:dark:text-qareeb-accent transition-colors" />} label="Buku Tajwid" bg="bg-indigo-50 dark:bg-qareeb-gray dark:border dark:border-white/5" />
-          <QuickAction href="/quiz" icon={<CheckSquare size={24} className="text-orange-600 dark:text-white group-hover:dark:text-qareeb-accent transition-colors" />} label="Latihan" bg="bg-orange-50 dark:bg-qareeb-gray dark:border dark:border-white/5" />
-        </div>
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 w-full max-w-md mx-auto bg-white dark:bg-qareeb-black/90 dark:backdrop-blur-xl border-t border-gray-100 dark:border-white/5 px-6 py-4 flex justify-between items-center z-50 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors duration-300">
-        <BottomNavItem href="/" icon={<Home size={24} />} label="Home" active />
-        <BottomNavItem href="/materi" icon={<BookOpen size={24} />} label="Modul" />
-        <BottomNavItem href="/quiz" icon={<CheckSquare size={24} />} label="Latihan" />
-      </div>
+      </nav>
+      {/* END: BottomNavigation */}
 
       {/* PWA Install Prompt */}
       <PwaPrompt />
@@ -167,39 +225,21 @@ export default function TajwidDashboard() {
   );
 }
 
-// Sub-components diperbarui agar memakai Link Next.js
-function QuickAction({ href, icon, label, bg }: { href: string, icon: React.ReactNode, label: string, bg: string }) {
-  return (
-    <Link href={href} className="flex flex-col items-center gap-2 cursor-pointer group">
-      <div className={`w-14 h-14 rounded-2xl ${bg} flex items-center justify-center transition-all group-hover:scale-105 group-hover:border-qareeb-accent`}>
-        {icon}
-      </div>
-      <span className="text-[10px] font-medium text-gray-600 dark:text-qareeb-muted uppercase tracking-tighter text-center">{label}</span>
-    </Link>
-  );
-}
-
 function BottomNavItem({ href, icon, label, active = false }: { href: string, icon: React.ReactNode, label: string, active?: boolean }) {
   if (active) {
     return (
-      <Link href={href} className="flex flex-col items-center gap-1 group">
-        <div className="relative">
-          <div className="text-[#312e81] dark:text-qareeb-accent transition-colors">
-            {icon}
-          </div>
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#312e81] dark:bg-qareeb-accent"></div>
-        </div>
-        <span className="text-[10px] font-bold text-[#312e81] dark:text-qareeb-accent uppercase tracking-tighter mt-1">{label}</span>
+      <Link href={href} className="flex flex-col items-center gap-1.5 text-indigo-600 dark:text-indigo-400 relative">
+        <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full absolute -top-1"></div>
+        {icon}
+        <span className="text-[10px] font-bold">{label}</span>
       </Link>
     );
   }
 
   return (
-    <Link href={href} className={`flex flex-col items-center gap-1 cursor-pointer text-gray-400 dark:text-qareeb-muted hover:text-[#312e81] dark:hover:text-white transition-colors`}>
-      <div>
-        {icon}
-      </div>
-      <span className="text-[10px] font-medium uppercase tracking-tighter mt-1">{label}</span>
+    <Link href={href} className="flex flex-col items-center gap-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      {icon}
+      <span className="text-[10px] font-bold">{label}</span>
     </Link>
   );
 }
