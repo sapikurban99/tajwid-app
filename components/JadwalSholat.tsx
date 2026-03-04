@@ -12,131 +12,119 @@ interface PrayerTimes {
     Isha: string;
 }
 
+// Default: Bandung
+const DEFAULT_LAT = -6.9175;
+const DEFAULT_LON = 107.6191;
+
 export default function JadwalSholat() {
     const [timings, setTimings] = useState<PrayerTimes | null>(null);
-    const [locationName, setLocationName] = useState('D.K.I Jakarta');
+    const [locationName, setLocationName] = useState('Bandung');
     const [loading, setLoading] = useState(true);
     const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [locationError, setLocationError] = useState<string | null>(null);
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
 
-    const fetchTimes = useCallback(async (provinsi: string, kabkota: string) => {
+    const fetchTimes = useCallback(async (lat: number, lon: number) => {
         setLoading(true);
         try {
-            // Menggunakan EQuran API v2
-            const res = await fetch('https://equran.id/api/v2/shalat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    provinsi: provinsi,
-                    kabkota: kabkota
-                })
-            });
+            const today = new Date();
+            const dateStr = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
 
+            // Aladhan API: method=20 = Kementerian Agama RI
+            const res = await fetch(
+                `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=20`
+            );
             const data = await res.json();
 
-            if (data.code === 200 && data.data && data.data.jadwal) {
-                const todayDate = new Date().getDate();
-                // Cari jadwal hari ini berdasarkan tanggal
-                const schedule = data.data.jadwal.find((j: any) => j.tanggal === todayDate);
-
-                if (schedule) {
-                    setTimings({
-                        Imsak: schedule.imsak,
-                        Fajr: schedule.subuh,
-                        Dhuhr: schedule.dzuhur,
-                        Asr: schedule.ashar,
-                        Maghrib: schedule.maghrib,
-                        Isha: schedule.isya,
-                    });
-                    setLocationName(`${kabkota}, ${provinsi}`);
-                }
+            if (data.code === 200 && data.data?.timings) {
+                const t = data.data.timings;
+                setTimings({
+                    Imsak: t.Imsak,
+                    Fajr: t.Fajr,
+                    Dhuhr: t.Dhuhr,
+                    Asr: t.Asr,
+                    Maghrib: t.Maghrib,
+                    Isha: t.Isha,
+                });
             }
         } catch (err) {
-            console.error("Failed to fetch prayer times from EQuran", err);
+            console.error("Failed to fetch prayer times from Aladhan", err);
         } finally {
             setLoading(false);
             setIsUpdatingLocation(false);
         }
     }, []);
 
+    const reverseGeocode = useCallback(async (lat: number, lon: number) => {
+        try {
+            const geoRes = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+                { headers: { 'Accept-Language': 'id-ID,id;q=0.9' } }
+            );
+            const geoData = await geoRes.json();
+            if (geoData?.address) {
+                const city = geoData.address.city || geoData.address.county || geoData.address.town || geoData.address.village || '';
+                const state = geoData.address.state || '';
+                if (city && state) {
+                    setLocationName(`${city}, ${state}`);
+                } else if (city) {
+                    setLocationName(city);
+                }
+            }
+        } catch {
+            // Geocoding gagal, tetap pakai nama lokasi sebelumnya
+        }
+    }, []);
+
     const fetchByGeolocation = useCallback(() => {
         setIsUpdatingLocation(true);
+        setLocationError(null);
+
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    try {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-
-                        // Reverse geocoding with Nominatim (force Indonesian language)
-                        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, {
-                            headers: {
-                                'Accept-Language': 'id-ID,id;q=0.9'
-                            }
-                        });
-                        const geoData = await geoRes.json();
-
-                        if (geoData && geoData.address) {
-                            // Default fallback to Jakarta if mapping fails
-                            let mappedProvinsi = "DKI Jakarta";
-                            let mappedKabkota = "Kota Jakarta";
-
-                            const state = geoData.address.state || geoData.address.region || "";
-                            const city = geoData.address.city || geoData.address.county || geoData.address.town || "";
-
-                            // Simple mapping heuristic
-                            if (state.toLowerCase().includes("jakarta")) {
-                                mappedProvinsi = "DKI Jakarta";
-                                mappedKabkota = "Kota Jakarta";
-                            } else if (state && city) {
-                                mappedProvinsi = state;
-
-                                // Clean up the city string to match EQuran format ("Kota ..." or "Kab. ...")
-                                if (city.toLowerCase().startsWith("kota") || city.toLowerCase().startsWith("kab")) {
-                                    mappedKabkota = city;
-                                } else if (city.toLowerCase().includes("city") || city.toLowerCase().includes("kota")) {
-                                    mappedKabkota = `Kota ${city.replace(/(city|kota)/ig, '').trim()}`;
-                                } else {
-                                    mappedKabkota = `Kota ${city}`;
-                                }
-
-                                // Special case for Yogyakarta
-                                if (state.toLowerCase().includes("yogyakarta")) {
-                                    mappedProvinsi = "D.I. Yogyakarta";
-                                }
-                            }
-
-                            // Try hitting EQuran API
-                            fetchTimes(mappedProvinsi, mappedKabkota);
-                        } else {
-                            fetchTimes("DKI Jakarta", "Kota Jakarta");
-                        }
-                    } catch (e) {
-                        console.warn("Reverse geocoding failed, using default (Jakarta)", e);
-                        fetchTimes("DKI Jakarta", "Kota Jakarta");
-                    }
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    reverseGeocode(lat, lon);
+                    fetchTimes(lat, lon);
                 },
                 (error) => {
-                    console.warn("Geolocation blocked or failed, using default (Jakarta)");
-                    fetchTimes("DKI Jakarta", "Kota Jakarta");
+                    let errorMsg = '';
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = 'Izin lokasi ditolak. Buka pengaturan browser dan izinkan akses lokasi.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = 'GPS tidak tersedia. Pastikan GPS HP sudah dinyalakan.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = 'Waktu habis mencari lokasi. Pastikan GPS HP aktif dan coba lagi.';
+                            break;
+                        default:
+                            errorMsg = 'Gagal mendapatkan lokasi. Coba lagi.';
+                    }
+                    console.warn("Geolocation failed:", error.message);
+                    setLocationError(errorMsg);
+                    setTimeout(() => setLocationError(null), 8000);
+                    fetchTimes(DEFAULT_LAT, DEFAULT_LON);
                 },
-                { timeout: 5000 }
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
         } else {
-            fetchTimes("DKI Jakarta", "Kota Jakarta");
+            setLocationError('Browser tidak mendukung GPS.');
+            setTimeout(() => setLocationError(null), 8000);
+            fetchTimes(DEFAULT_LAT, DEFAULT_LON);
         }
-    }, [fetchTimes]);
+    }, [fetchTimes, reverseGeocode]);
 
-    // Initial load - safely fallback to Jakarta first so it doesn't block the UI
+    // Initial load - default Bandung
     useEffect(() => {
-        fetchTimes("DKI Jakarta", "Kota Jakarta");
+        fetchTimes(DEFAULT_LAT, DEFAULT_LON);
     }, [fetchTimes]);
 
     const timeString = currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -187,6 +175,11 @@ export default function JadwalSholat() {
                         <RefreshCw size={12} className={isUpdatingLocation ? "animate-spin" : ""} />
                         {isUpdatingLocation ? 'Mencari Lokasi...' : 'Update Lokasi GPS'}
                     </button>
+                    {locationError && (
+                        <div className="mt-2 text-[11px] font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-xl border border-red-200 dark:border-red-800 animate-pulse">
+                            ⚠️ {locationError}
+                        </div>
+                    )}
                 </div>
                 <div className="text-xl font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-xl">
                     {timeString}

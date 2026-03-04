@@ -123,11 +123,14 @@ export default function QuranPage() {
                 <div className="px-6 mt-6 space-y-4">
                     {loadingProgress >= 0 ? (
                         <div className="flex flex-col justify-center items-center py-20 space-y-4">
-                            <div className="relative w-16 h-16 flex items-center justify-center">
-                                <Loader2 className="animate-spin text-indigo-700 dark:text-qareeb-accent absolute" size={40} />
-                                <span className="text-xs font-bold dark:text-white">{loadingProgress}%</span>
+                            <span className="text-3xl font-bold text-indigo-700 dark:text-qareeb-accent">{loadingProgress}%</span>
+                            <p className="text-sm text-gray-500 dark:text-qareeb-muted font-medium">Memuat Al-Qur&apos;an...</p>
+                            <div className="w-48 h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-indigo-600 dark:bg-qareeb-accent rounded-full transition-all duration-300 ease-out"
+                                    style={{ width: `${loadingProgress}%` }}
+                                />
                             </div>
-                            <p className="text-sm text-gray-500 dark:text-qareeb-muted font-medium animate-pulse">Memuat Al-Qur'an...</p>
                         </div>
                     ) : (
                         filteredSurahs.map((surah) => (

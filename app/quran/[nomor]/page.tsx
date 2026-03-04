@@ -135,12 +135,15 @@ export default function SurahPage({ params }: { params: Promise<{ nomor: string 
 
     if (loadingProgress >= 0) {
         return (
-            <div className="max-w-md mx-auto min-h-screen bg-gray-50 dark:bg-qareeb-black flex flex-col justify-center items-center">
-                <div className="relative w-16 h-16 flex items-center justify-center mb-4">
-                    <Loader2 className="animate-spin text-indigo-700 dark:text-qareeb-accent absolute" size={48} />
-                    <span className="text-sm font-bold dark:text-white">{loadingProgress}%</span>
+            <div className="max-w-md mx-auto min-h-screen bg-gray-50 dark:bg-qareeb-black flex flex-col justify-center items-center gap-4">
+                <span className="text-4xl font-bold text-indigo-700 dark:text-qareeb-accent">{loadingProgress}%</span>
+                <p className="text-gray-500 dark:text-qareeb-muted font-medium">Memuat Surah...</p>
+                <div className="w-48 h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-indigo-600 dark:bg-qareeb-accent rounded-full transition-all duration-300 ease-out"
+                        style={{ width: `${loadingProgress}%` }}
+                    />
                 </div>
-                <p className="text-gray-500 dark:text-qareeb-muted font-medium animate-pulse">Memuat Surah...</p>
             </div>
         );
     }
