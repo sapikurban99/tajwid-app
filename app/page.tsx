@@ -10,6 +10,7 @@ import {
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import PwaPrompt from '@/components/PwaPrompt';
+import JadwalSholat from '@/components/JadwalSholat';
 
 export default function TajwidDashboard() {
   const [errorStatus, setErrorStatus] = useState(false);
@@ -130,6 +131,8 @@ export default function TajwidDashboard() {
           </div>
         </section>
         {/* END: HeroCard */}
+
+        <JadwalSholat />
 
         {/* PRIMARY PILLARS: Quran, Tajwid, Safinah */}
         <section>

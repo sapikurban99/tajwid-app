@@ -10,6 +10,7 @@ interface Ayat {
     teksLatin: string;
     teksIndonesia: string;
     audio: Record<string, string>;
+    tafsir?: string;
 }
 
 interface SurahDetail {
@@ -29,6 +30,7 @@ export default function SurahPage({ params }: { params: Promise<{ nomor: string 
     const [loadingProgress, setLoadingProgress] = useState(-1);
     const [isMushafMode, setIsMushafMode] = useState(false);
     const [bookmarkedStr, setBookmarkedStr] = useState<string | null>(null);
+    const [openTafsir, setOpenTafsir] = useState<number | null>(null);
 
     // Audio State
     const [playingAyat, setPlayingAyat] = useState<number | null>(null);
@@ -51,11 +53,27 @@ export default function SurahPage({ params }: { params: Promise<{ nomor: string 
 
         const fetchSurahDetail = async () => {
             try {
-                const res = await fetch(`https://equran.id/api/v2/surat/${nomor}`);
-                const { data } = await res.json();
+                const [suratRes, tafsirRes] = await Promise.all([
+                    fetch(`https://equran.id/api/v2/surat/${nomor}`),
+                    fetch(`https://equran.id/api/v2/tafsir/${nomor}`)
+                ]);
+                const { data: surat } = await suratRes.json();
+                const { data: tafsir } = await tafsirRes.json();
+
+                if (surat && tafsir && tafsir.tafsir) {
+                    const tafsirMap = new Map();
+                    tafsir.tafsir.forEach((t: any) => {
+                        tafsirMap.set(t.ayat, t.teks);
+                    });
+                    surat.ayat = surat.ayat.map((a: any) => ({
+                        ...a,
+                        tafsir: tafsirMap.get(a.nomorAyat) || ""
+                    }));
+                }
+
                 await new Promise(r => setTimeout(r, 600));
 
-                setSurah(data);
+                setSurah(surat);
             } catch (error) {
                 console.error('Gagal mengambil data detail Surah', error);
             } finally {
@@ -235,13 +253,30 @@ export default function SurahPage({ params }: { params: Promise<{ nomor: string 
                                         {a.teksArab}
                                     </p>
 
-                                    <div className="space-y-2">
+                                    <div className="space-y-4">
                                         <p className="text-sm text-indigo-800 dark:text-qareeb-accent/90 font-medium leading-relaxed">
                                             {a.teksLatin}
                                         </p>
-                                        <p className="text-sm text-gray-600 dark:text-qareeb-muted leading-relaxed">
+                                        <p className="text-sm text-gray-600 dark:text-qareeb-muted leading-relaxed pb-3 border-b border-gray-100 dark:border-white/5">
                                             {a.teksIndonesia}
                                         </p>
+
+                                        {/* Tafsir Toggle & Content */}
+                                        <div>
+                                            <button
+                                                onClick={() => setOpenTafsir(openTafsir === a.nomorAyat ? null : a.nomorAyat)}
+                                                className="text-xs font-bold text-indigo-600 dark:text-qareeb-accent hover:text-indigo-800 dark:hover:text-white transition-colors flex items-center gap-1"
+                                            >
+                                                <AlignJustify size={14} />
+                                                {openTafsir === a.nomorAyat ? 'Tutup Tafsir' : 'Baca Tafsir'}
+                                            </button>
+
+                                            {openTafsir === a.nomorAyat && a.tafsir && (
+                                                <div className="mt-4 p-4 bg-indigo-50/50 dark:bg-white/5 rounded-xl text-sm text-gray-700 dark:text-gray-300 leading-relaxed max-w-none whitespace-pre-wrap font-serif border border-indigo-100/50 dark:border-white/10">
+                                                    {a.tafsir}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             );
