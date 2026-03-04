@@ -93,7 +93,18 @@ export default function JadwalSholat() {
                                 mappedKabkota = "Kota Jakarta";
                             } else if (state && city) {
                                 mappedProvinsi = state;
-                                mappedKabkota = city.startsWith("Kota") || city.startsWith("Kab") ? city : `Kota ${city}`;
+
+                                // Clean up the city string to match EQuran format ("Kota ..." or "Kab. ...")
+                                if (city.toLowerCase().startsWith("kota") || city.toLowerCase().startsWith("kab")) {
+                                    mappedKabkota = city;
+                                } else {
+                                    mappedKabkota = `Kota ${city}`;
+                                }
+
+                                // Special case for Yogyakarta
+                                if (state.toLowerCase().includes("yogyakarta")) {
+                                    mappedProvinsi = "D.I. Yogyakarta";
+                                }
                             }
 
                             fetchTimes(mappedProvinsi, mappedKabkota);
