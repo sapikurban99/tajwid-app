@@ -75,8 +75,12 @@ export default function JadwalSholat() {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
 
-                        // Reverse geocoding with Nominatim
-                        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                        // Reverse geocoding with Nominatim (force Indonesian language)
+                        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, {
+                            headers: {
+                                'Accept-Language': 'id-ID,id;q=0.9'
+                            }
+                        });
                         const geoData = await geoRes.json();
 
                         if (geoData && geoData.address) {
@@ -97,6 +101,8 @@ export default function JadwalSholat() {
                                 // Clean up the city string to match EQuran format ("Kota ..." or "Kab. ...")
                                 if (city.toLowerCase().startsWith("kota") || city.toLowerCase().startsWith("kab")) {
                                     mappedKabkota = city;
+                                } else if (city.toLowerCase().includes("city") || city.toLowerCase().includes("kota")) {
+                                    mappedKabkota = `Kota ${city.replace(/(city|kota)/ig, '').trim()}`;
                                 } else {
                                     mappedKabkota = `Kota ${city}`;
                                 }
@@ -107,6 +113,7 @@ export default function JadwalSholat() {
                                 }
                             }
 
+                            // Try hitting EQuran API
                             fetchTimes(mappedProvinsi, mappedKabkota);
                         } else {
                             fetchTimes("DKI Jakarta", "Kota Jakarta");
