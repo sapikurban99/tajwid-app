@@ -24,7 +24,7 @@ export default function JadwalSholat() {
     }, []);
 
     useEffect(() => {
-        const fetchTimes = async () => {
+        const fetchTimes = async (provinsi: string, kabkota: string) => {
             try {
                 // Menggunakan EQuran API v2
                 const res = await fetch('https://equran.id/api/v2/shalat', {
@@ -33,8 +33,8 @@ export default function JadwalSholat() {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        provinsi: "DKI Jakarta",
-                        kabkota: "Kota Jakarta"
+                        provinsi: provinsi,
+                        kabkota: kabkota
                     })
                 });
 
@@ -54,6 +54,7 @@ export default function JadwalSholat() {
                             Maghrib: schedule.maghrib,
                             Isha: schedule.isya,
                         });
+                        setLocationName(`${kabkota}, ${provinsi}`);
                     }
                 }
             } catch (err) {
@@ -63,7 +64,56 @@ export default function JadwalSholat() {
             }
         };
 
-        fetchTimes();
+        const fetchByGeolocation = () => {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        try {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+
+                            // Reverse geocoding with Nominatim
+                            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                            const geoData = await geoRes.json();
+
+                            if (geoData && geoData.address) {
+                                // Default fallback to Jakarta if mapping fails
+                                let mappedProvinsi = "DKI Jakarta";
+                                let mappedKabkota = "Kota Jakarta";
+
+                                const state = geoData.address.state || geoData.address.region || "";
+                                const city = geoData.address.city || geoData.address.county || geoData.address.town || "";
+
+                                // Simple mapping heuristic (can be expanded)
+                                if (state.toLowerCase().includes("jakarta")) {
+                                    mappedProvinsi = "DKI Jakarta";
+                                    mappedKabkota = "Kota Jakarta";
+                                } else if (state && city) {
+                                    mappedProvinsi = state;
+                                    mappedKabkota = city.startsWith("Kota") || city.startsWith("Kab") ? city : `Kota ${city}`;
+                                }
+
+                                fetchTimes(mappedProvinsi, mappedKabkota);
+                            } else {
+                                fetchTimes("DKI Jakarta", "Kota Jakarta");
+                            }
+                        } catch (e) {
+                            console.warn("Reverse geocoding failed, using default (Jakarta)", e);
+                            fetchTimes("DKI Jakarta", "Kota Jakarta");
+                        }
+                    },
+                    (error) => {
+                        console.warn("Geolocation blocked or failed, using default (Jakarta)");
+                        fetchTimes("DKI Jakarta", "Kota Jakarta");
+                    },
+                    { timeout: 5000 }
+                );
+            } else {
+                fetchTimes("DKI Jakarta", "Kota Jakarta");
+            }
+        };
+
+        fetchByGeolocation();
     }, []);
 
     const timeString = currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
