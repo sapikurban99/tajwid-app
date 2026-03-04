@@ -6,6 +6,7 @@ function doGet(e) {
     var targetSheet = 'MateriTajwid';
 
     // Kalau request ada parameter ?sheet=MateriSafinatun, kita ganti baca ke sheet-nya
+    // Supported sheets: MateriTajwid, MateriSafinatun, MateriKhuluq
     if (e.parameter && e.parameter.sheet) {
         targetSheet = e.parameter.sheet;
     }

@@ -5,7 +5,7 @@ import {
   BookOpen,
   FileText, Home, CheckSquare,
   PlayCircle, BookMarked, Activity, Moon, Sun,
-  ChevronRight
+  ChevronRight, Heart
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
@@ -182,6 +182,20 @@ export default function TajwidDashboard() {
                 <ChevronRight size={24} />
               </div>
             </Link>
+
+            {/* Husnul Khuluq Card */}
+            <Link href="/khuluq" className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 rounded-3xl shadow-sm flex items-center gap-4 group active:scale-[0.98] transition-transform">
+              <div className="flex-shrink-0 w-16 h-16 bg-amber-50 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                <Heart size={32} />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-slate-900 dark:text-white text-lg">Husnul Khuluq</h4>
+                <p className="text-xs text-slate-500 font-medium mt-1">Pelajari akhlak mulia dan adab dalam Islam.</p>
+              </div>
+              <div className="p-2 text-amber-600 dark:text-amber-400">
+                <ChevronRight size={24} />
+              </div>
+            </Link>
           </div>
         </section>
 
@@ -218,6 +232,7 @@ export default function TajwidDashboard() {
           <BottomNavItem href="/quran" icon={<BookOpen size={24} />} label="Qur'an" />
           <BottomNavItem href="/materi" icon={<FileText size={24} />} label="Tajwid" />
           <BottomNavItem href="/safinatun" icon={<BookMarked size={24} />} label="Safinah" />
+          <BottomNavItem href="/khuluq" icon={<Heart size={24} />} label="Khuluq" />
         </div>
       </nav>
       {/* END: BottomNavigation */}
